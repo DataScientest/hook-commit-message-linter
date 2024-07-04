@@ -1,0 +1,4 @@
+- id: meta-lint-commit
+  name: Lint commit messages
+  entry: ./lint-commit.sh
+  language: script
