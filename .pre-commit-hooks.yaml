@@ -2,3 +2,4 @@
   name: Lint commit messages
   entry: ./lint-commit.sh
   language: script
+  stages: [commit-msg]
