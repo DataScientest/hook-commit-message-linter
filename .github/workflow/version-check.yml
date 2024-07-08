@@ -1,0 +1,39 @@
+name: Check Version Update
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-version-update:
+    name: Check if the version has been updated
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get tags
+        run: git fetch --tags origin
+
+      - name: Check the version
+        id: check_version
+        run: |
+          GIT_VERSION=$(sed -e 's/v//' -e 's/-.*//' <<< $(git describe --tags $(git rev-list --tags --max-count=1)));
+          PACKAGE_VERSION=$(cat version.md);
+          if [ "$GIT_VERSION" = "$PACKAGE_VERSION" ]; then echo exit_code="version_error" >> $GITHUB_OUTPUT; fi
+
+      - name: Comment for version error
+        uses: actions/github-script@v6
+        if: steps.check_version.outputs.exit_code == 'version_error'
+        with:
+          github-token: ${{ secrets.GH_ACCESS_KEY }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: 'DataScientest',
+              repo: 'hook-commit-message-linter',
+              body: 'Hello!\n\nThe version in `version.md` is not updated.\n\nPlease follow the semantic versioning.'
+            })
+
+      - name: Exit on error
+        if: steps.check_version.outputs.exit_code == 'version_error'
+        run: exit 1
